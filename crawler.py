@@ -3,15 +3,11 @@ import re
 from urllib.parse import urlparse
 from corpus import Corpus
 import lxml
-<<<<<<< HEAD
 import urllib.request
-=======
 import http.client
 import os
 import urllib.request
 
-
->>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
 
 logger = logging.getLogger(__name__)
 
@@ -89,10 +85,6 @@ class Crawler:
     
         
         parsed = urlparse(url)
-<<<<<<< HEAD
-        
-=======
->>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
         if parsed.scheme not in set(["http", "https"]):
             return False
         try:
@@ -101,18 +93,8 @@ class Crawler:
                                     + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
                                     + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
                                     + "|thmx|mso|arff|rtf|jar|csv" \
-<<<<<<< HEAD
                                     + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) and urllib.request.urlopen(url).getcode() == 200
-=======
-                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())\
-                   and urllib.request.urlopen(url).getcode() == 200
->>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
 
         except TypeError:
             print("TypeError for ", parsed)
             return False
-
-<<<<<<< HEAD
-=======
-
->>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
