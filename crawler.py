@@ -3,10 +3,7 @@ import re
 from urllib.parse import urlparse
 from corpus import Corpus
 import lxml
-import http.client
-import requests
-
-
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +24,9 @@ class Crawler:
         """
         while self.frontier.has_next_url():
             url = self.frontier.get_next_url()
+#             self.is_valid(url)
             logger.info("Fetching URL %s ... Fetched: %s, Queue size: %s", url, self.frontier.fetched, len(self.frontier))
+            
             url_data = self.fetch_url(url)
 
             for next_link in self.extract_next_links(url_data):
@@ -71,8 +70,11 @@ class Crawler:
         filter out crawler traps. Duplicated urls will be taken care of by frontier. You don't need to check for duplication
         in this method
         """
+        print(urllib.request.urlopen(url).getcode())
+    
+        
         parsed = urlparse(url)
-        print()
+        
         if parsed.scheme not in set(["http", "https"]):
             return False
         try:
@@ -81,13 +83,9 @@ class Crawler:
                                     + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
                                     + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
                                     + "|thmx|mso|arff|rtf|jar|csv" \
-                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())
+                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) and urllib.request.urlopen(url).getcode() == 200
 
         except TypeError:
             print("TypeError for ", parsed)
             return False
 
-
-        def extract_next_links(self, url_data):
-            pass
-            

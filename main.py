@@ -13,10 +13,11 @@ if __name__ == "__main__":
     # Instantiates frontier and loads the last state if exists
     frontier = Frontier()
     frontier.load_frontier()
-    print(lxml.__name__)
+
     # Registers a shutdown hook to save frontier state upon unexpected shutdown
     atexit.register(frontier.save_frontier)
 
     # Instantiates a crawler object and starts crawling
     crawler = Crawler(frontier)
     crawler.start_crawling()
+    crawler.is_valid("https://google.com")
