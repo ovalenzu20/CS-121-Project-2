@@ -3,7 +3,15 @@ import re
 from urllib.parse import urlparse
 from corpus import Corpus
 import lxml
+<<<<<<< HEAD
 import urllib.request
+=======
+import http.client
+import os
+import urllib.request
+
+
+>>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +30,7 @@ class Crawler:
         This method starts the crawling process which is scraping urls from the next available link in frontier and adding
         the scraped links to the frontier
         """
+        print(len(self.frontier))
         while self.frontier.has_next_url():
             url = self.frontier.get_next_url()
 #             self.is_valid(url)
@@ -47,6 +56,12 @@ class Crawler:
             "content": None,
             "size": 0
         }
+        fileAddr = self.corpus.get_file_name(url)
+        if fileAddr != None:
+            f = open(fileAddr)
+            str = f.read()
+            url_data["content"] = str.encode('utf-8')
+            url_data["size"] = os.path.getsize(fileAddr)
         return url_data
 
     def extract_next_links(self, url_data):
@@ -61,7 +76,7 @@ class Crawler:
         """
         outputLinks = []
         print("outptLinks: ", outputLinks)
-        print("url_data: ", url_data)
+        print("url_data: ", url_data["content"])
         return outputLinks
 
     def is_valid(self, url):
@@ -74,7 +89,10 @@ class Crawler:
     
         
         parsed = urlparse(url)
+<<<<<<< HEAD
         
+=======
+>>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
         if parsed.scheme not in set(["http", "https"]):
             return False
         try:
@@ -83,9 +101,18 @@ class Crawler:
                                     + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
                                     + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
                                     + "|thmx|mso|arff|rtf|jar|csv" \
+<<<<<<< HEAD
                                     + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) and urllib.request.urlopen(url).getcode() == 200
+=======
+                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())\
+                   and urllib.request.urlopen(url).getcode() == 200
+>>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
 
         except TypeError:
             print("TypeError for ", parsed)
             return False
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6

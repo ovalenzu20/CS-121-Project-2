@@ -1,11 +1,12 @@
 import atexit
 import logging
-
+import os
 import lxml
 from crawler import Crawler
 from frontier import Frontier
 
 if __name__ == "__main__":
+    print("hello")
     # Configures basic logging
     logging.basicConfig(format='%(asctime)s (%(name)s) %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
                         level=logging.INFO)
@@ -13,11 +14,18 @@ if __name__ == "__main__":
     # Instantiates frontier and loads the last state if exists
     frontier = Frontier()
     frontier.load_frontier()
+<<<<<<< HEAD
 
+=======
+>>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
     # Registers a shutdown hook to save frontier state upon unexpected shutdown
     atexit.register(frontier.save_frontier)
 
     # Instantiates a crawler object and starts crawling
     crawler = Crawler(frontier)
     crawler.start_crawling()
+<<<<<<< HEAD
     crawler.is_valid("https://google.com")
+=======
+    print("goodbye")
+>>>>>>> c4432a8b40840d8c0736bd6103eebc75cc5e8ff6
