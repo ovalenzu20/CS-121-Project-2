@@ -1,15 +1,19 @@
 import logging
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin, parse_qs
 from corpus import Corpus
 import lxml
 import urllib.request
 import http.client
 import os
 import urllib.request
+from collections import defaultdict
+
+from bs4 import BeautifulSoup
 
 
 logger = logging.getLogger(__name__)
+
 
 class Crawler:
     """
@@ -20,16 +24,19 @@ class Crawler:
     def __init__(self, frontier):
         self.frontier = frontier
         self.corpus = Corpus()
+        self.maxOutLinks = ["", float("-inf")]
+        self.numberOfLinksCrawled = 0
+        self.TRAP_PARAMS = {"action=download","action=login","action=edit"}
+        self.domainCounts = defaultdict(int)
+
 
     def start_crawling(self):
         """
         This method starts the crawling process which is scraping urls from the next available link in frontier and adding
         the scraped links to the frontier
         """
-        print(len(self.frontier))
         while self.frontier.has_next_url():
             url = self.frontier.get_next_url()
-#             self.is_valid(url)
             logger.info("Fetching URL %s ... Fetched: %s, Queue size: %s", url, self.frontier.fetched, len(self.frontier))
             
             url_data = self.fetch_url(url)
@@ -53,6 +60,7 @@ class Crawler:
             "size": 0
         }
         fileAddr = self.corpus.get_file_name(url)
+        
         if fileAddr != None:
             f = open(fileAddr)
             str = f.read()
@@ -71,8 +79,24 @@ class Crawler:
         Suggested library: lxml
         """
         outputLinks = []
-        print("outptLinks: ", outputLinks)
-        print("url_data: ", url_data["content"])
+        beautifulSoup = BeautifulSoup(url_data["content"], "lxml")
+        aTags = beautifulSoup.find_all("a")
+        
+        linkCount = 0
+        
+        try:
+            baseURL = url_data["url"]
+            
+            for link in aTags:
+                relativeURL = link.attrs["href"]
+                absoluteURL = urljoin(baseURL, relativeURL)
+                outputLinks.append(absoluteURL)
+                linkCount += 1
+                self.numberOfLinksCrawled += 1
+                
+        except KeyError:
+            pass
+        
         return outputLinks
 
     def is_valid(self, url):
@@ -80,20 +104,32 @@ class Crawler:
         Function returns True or False based on whether the url has to be fetched or not. This is a great place to
         filter out crawler traps. Duplicated urls will be taken care of by frontier. You don't need to check for duplication
         in this method
-        """
-        print(urllib.request.urlopen(url).getcode())
+        """    
     
-        
         parsed = urlparse(url)
+        if parsed[:6] == "mailto":
+            return False
+
+        #Return false if we receive some parameters that know are bad
+        if parsed.query in self.TRAP_PARAMS:
+            return False
+        
+        #If the URL has been accessed more than 13 times return false
+        domainName = parsed.netloc + parsed.path
+        self.domainCounts[domainName] += 1
+        if self.domainCounts[domainName] > 13:
+            return False
+
         if parsed.scheme not in set(["http", "https"]):
             return False
+
         try:
             return ".ics.uci.edu" in parsed.hostname \
                    and not re.match(".*\.(css|js|bmp|gif|jpe?g|ico" + "|png|tiff?|mid|mp2|mp3|mp4" \
                                     + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
                                     + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
                                     + "|thmx|mso|arff|rtf|jar|csv" \
-                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) and urllib.request.urlopen(url).getcode() == 200
+                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) #and urllib.request.urlopen(url).getcode() == 200
 
         except TypeError:
             print("TypeError for ", parsed)
