@@ -20,3 +20,4 @@ if __name__ == "__main__":
     crawler = Crawler(frontier)
     crawler.start_crawling()
     print(crawler.numberOfLinksCrawled)
+    print(crawler.printDomains())

@@ -24,12 +24,14 @@ class Crawler:
     def __init__(self, frontier):
         self.frontier = frontier
         self.corpus = Corpus()
-        self.maxOutLinks = ["", float("-inf")]
+        self.maxValidOutLinks = ["", float("-inf")]
         self.numberOfLinksCrawled = 0
         self.TRAP_PARAMS = {"action=download","action=login","action=edit"}
         self.domainCounts = defaultdict(int)
+        self.domainAndOutputLinks = defaultdict(int)
+        self.trapUrls = []
 
-
+    #Assumption: all links are processed -- we have to check if they're traps and if valid
     def start_crawling(self):
         """
         This method starts the crawling process which is scraping urls from the next available link in frontier and adding
@@ -40,11 +42,25 @@ class Crawler:
             logger.info("Fetching URL %s ... Fetched: %s, Queue size: %s", url, self.frontier.fetched, len(self.frontier))
             
             url_data = self.fetch_url(url)
-
-            for next_link in self.extract_next_links(url_data):
+            print(url_data["url"])
+            outputLinks = self.extract_next_links(url_data)
+            self.domainAndOutputLinks[url_data["url"]] = len(outputLinks)
+            
+            validOutputLinks = 0
+            
+            for next_link in outputLinks:
                 if self.corpus.get_file_name(next_link) is not None:
                     if self.is_valid(next_link):
+                        validOutputLinks += 1
                         self.frontier.add_url(next_link)
+                        
+            if validOutputLinks > self.maxValidOutLinks[1]:
+                self.maxValidOutLinks[0] = url_data["url"]
+                self.maxValidOutLinks[1] = validOutputLinks
+            
+            validOutputLinks = 0
+                        
+                        
 
     def fetch_url(self, url):
         """
@@ -66,6 +82,7 @@ class Crawler:
             str = f.read()
             url_data["content"] = str.encode('utf-8')
             url_data["size"] = os.path.getsize(fileAddr)
+            
         return url_data
 
     def extract_next_links(self, url_data):
@@ -79,11 +96,10 @@ class Crawler:
         Suggested library: lxml
         """
         outputLinks = []
+        
         beautifulSoup = BeautifulSoup(url_data["content"], "lxml")
         aTags = beautifulSoup.find_all("a")
-        
-        linkCount = 0
-        
+                
         try:
             baseURL = url_data["url"]
             
@@ -91,7 +107,6 @@ class Crawler:
                 relativeURL = link.attrs["href"]
                 absoluteURL = urljoin(baseURL, relativeURL)
                 outputLinks.append(absoluteURL)
-                linkCount += 1
                 self.numberOfLinksCrawled += 1
                 
         except KeyError:
@@ -99,28 +114,36 @@ class Crawler:
         
         return outputLinks
 
-    def is_valid(self, url):
-        """
-        Function returns True or False based on whether the url has to be fetched or not. This is a great place to
-        filter out crawler traps. Duplicated urls will be taken care of by frontier. You don't need to check for duplication
-        in this method
-        """    
-    
-        parsed = urlparse(url)
+
+    def is_trap(self, parsed):
         if parsed[:6] == "mailto":
-            return False
+            return True
 
         #Return false if we receive some parameters that know are bad
         if parsed.query in self.TRAP_PARAMS:
-            return False
+            return True
         
         #If the URL has been accessed more than 13 times return false
         domainName = parsed.netloc + parsed.path
         self.domainCounts[domainName] += 1
         if self.domainCounts[domainName] > 13:
-            return False
+            return True
 
         if parsed.scheme not in set(["http", "https"]):
+            return True
+    
+        return False
+    
+    def is_valid(self, url):
+        """
+        Function returns True or False based on whether the url has to be fetched or not. This is a great place to
+        filter out crawler traps. Duplicated urls will be taken care of by frontier. You don't need to check for duplication
+        in this method
+        """
+        parsed = urlparse(url)
+#         print(parsed.netloc)
+        if self.is_trap(parsed):
+            self.trapUrls.append(parsed.netloc + parsed.path)
             return False
 
         try:
@@ -134,3 +157,23 @@ class Crawler:
         except TypeError:
             print("TypeError for ", parsed)
             return False
+        
+        
+        
+    def printDomains(self):
+        pass
+#         print(f"Max Output Links: {self.maxOutLinks[0], self.maxOutLinks[1]}")
+#         
+#         for d,c in self.domainCounts.items():
+#             print(f"Domain: {d}, {c}")
+#             
+#         print("-----------------------------")
+#         
+#         for trap in self.trapUrls:
+#             print(trap)
+# 
+#         for d, c in self.domainAndOutputLinks.items():
+#             print(f"Domain: {d}, OutputLinksCount: {c}")
+        
+#         print(self.maxValidOutLinks)
+        
